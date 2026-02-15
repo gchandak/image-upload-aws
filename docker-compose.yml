@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: mont-localstack
+    ports:
+      - "4566:4566"  # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3,dynamodb,lambda,apigateway,iam,sts,logs
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "./docker/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./src:/app/src"
+      - "./requirements.txt:/app/requirements.txt"
+      - "localstack-data:/tmp/localstack"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mont-app
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+      - S3_BUCKET_NAME=mont-images
+      - DYNAMODB_TABLE_NAME=ImageMetadata
+      - DYNAMODB_GSI_NAME=UserIdTimestampIndex
+      - S3_PRESIGNED_URL_EXPIRY_UPLOAD=3600
+      - S3_PRESIGNED_URL_EXPIRY_DOWNLOAD=900
+      - LOG_LEVEL=INFO
+    volumes:
+      - "./src:/app/src"
+    networks:
+      - app-network
+    command: tail -f /dev/null  # Keep container running
+
+volumes:
+  localstack-data:
+
+networks:
+  app-network:
+    driver: bridge

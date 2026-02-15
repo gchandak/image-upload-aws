@@ -1,0 +1,51 @@
+{
+  "throttle": {
+    "rateLimit": 1000,
+    "burstLimit": 500
+  },
+  "quota": {
+    "limit": 10000,
+    "period": "DAY"
+  },
+  "apiKeys": [
+    {
+      "name": "default-api-key",
+      "description": "Default API key for testing",
+      "enabled": true
+    }
+  ],
+  "usagePlans": [
+    {
+      "name": "BasicPlan",
+      "description": "Basic usage plan with rate limiting",
+      "throttle": {
+        "rateLimit": 1000,
+        "burstLimit": 500
+      },
+      "quota": {
+        "limit": 10000,
+        "period": "DAY"
+      }
+    },
+    {
+      "name": "PremiumPlan",
+      "description": "Premium usage plan with higher limits",
+      "throttle": {
+        "rateLimit": 5000,
+        "burstLimit": 2000
+      },
+      "quota": {
+        "limit": 100000,
+        "period": "DAY"
+      }
+    }
+  ],
+  "methodSettings": {
+    "throttlingRateLimit": 1000,
+    "throttlingBurstLimit": 500,
+    "cachingEnabled": true,
+    "cacheTtlInSeconds": 300,
+    "metricsEnabled": true,
+    "loggingLevel": "INFO"
+  }
+}
